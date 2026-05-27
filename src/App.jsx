@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Toaster } from 'react-hot-toast'
+import { Analytics } from '@vercel/analytics/react'
 import Navbar from './components/Navbar'
 import Hero from './components/Hero'
 import TrustBar from './components/TrustBar'
@@ -80,6 +81,8 @@ export default function App() {
       {strategyModalOpen && (
         <StrategyModal onClose={() => setStrategyModalOpen(false)} />
       )}
+
+      <Analytics />
     </>
   )
 }
