@@ -168,23 +168,13 @@
     },
     {
       "parameters": {
-        "url": "https://maps.googleapis.com/maps/api/place/nearbysearch/json",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpQueryAuth",
+        "url": "https://overpass-api.de/api/interpreter",
         "sendQuery": true,
         "queryParameters": {
           "parameters": [
             {
-              "name": "location",
-              "value": "={{ $json.latitude }},{{ $json.longitude }}"
-            },
-            {
-              "name": "radius",
-              "value": "10000"
-            },
-            {
-              "name": "type",
-              "value": "={{ $json.business_category }}"
+              "name": "data",
+              "value": "=[out:json][timeout:25];(node[\"name\"](around:10000,{{ $json.latitude }},{{ $json.longitude }});way[\"name\"](around:10000,{{ $json.latitude }},{{ $json.longitude }}););out body 20;"
             }
           ]
         },
@@ -200,17 +190,11 @@
       "name": "Find Nearby Competitors",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [48, 336],
-      "credentials": {
-        "httpQueryAuth": {
-          "id": "p386QPvkP9GD4DLQ",
-          "name": "Query Auth account"
-        }
-      }
+      "position": [48, 336]
     },
     {
       "parameters": {
-        "jsCode": "const geoData    = $('Extract Geo Data').first().json;\nconst nearbyData = $('Find Nearby Competitors').first().json;\n\nconst competitors = (nearbyData.results || [])\n  .sort((a, b) => {\n    const scoreA = (a.rating || 0) * Math.log(a.user_ratings_total || 1);\n    const scoreB = (b.rating || 0) * Math.log(b.user_ratings_total || 1);\n    return scoreB - scoreA;\n  })\n  .slice(0, 10)\n  .map(c => ({\n    name: c.name,\n    rating: c.rating || 0,\n    reviews: c.user_ratings_total || 0,\n    category: (c.types && c.types[0]) || 'unknown'\n  }));\n\nreturn [{ json: {\n  business_name: geoData.business_name,\n  business_category: geoData.business_category,\n  location: geoData.formatted_address,\n  competitors\n}}];"
+        "jsCode": "const geoData    = $('Extract Geo Data').first().json;\nconst nearbyData = $('Find Nearby Competitors').first().json;\n\n// Overpass API returns elements[] — filter to named places only\nconst competitors = (nearbyData.elements || [])\n  .filter(e => e.tags && e.tags.name)\n  .slice(0, 10)\n  .map(e => ({\n    name: e.tags.name,\n    rating: 0,\n    reviews: 0,\n    category: e.tags.amenity || e.tags.shop || e.tags.office || e.tags.tourism || 'business',\n    address: [e.tags['addr:housenumber'], e.tags['addr:street'], e.tags['addr:city']].filter(Boolean).join(' ')\n  }));\n\nreturn [{ json: {\n  business_name: geoData.business_name,\n  business_category: geoData.business_category,\n  location: geoData.formatted_address,\n  competitors\n}}];"
       },
       "id": "b1a49da1-44c7-4109-b298-8aac363f792b",
       "name": "Normalize Top Competitors",
@@ -221,7 +205,7 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "=You are an SEO analyst.\n\nAnalyze the provided business and its competitors.\n\nINPUT:\n- Business name: {{ $('Validate & Sanitize Input').item.json.business_name }}\n- Category: {{ $('Extract Geo Data').item.json.business_category }}\n- Location: {{ $('Extract Geo Data').item.json.formatted_address }}\n- Competitors: {{ JSON.stringify($json.competitors) }}\n\nTASKS:\n1. Identify top competitors based on:\n   - Ratings\n   - Reviews\n   - Relevance (assign relevance_score 1-10)\n\n2. Generate SEO insights:\n   - What keywords competitors are likely ranking for\n   - Local SEO (\"near me\") keyword variations\n   - Industry-specific keywords\n\n3. Generate keyword clusters:\n   - High intent keywords (10-15 keywords)\n   - Local keywords (10-15 keywords)\n   - Long-tail keywords (10-15 keywords)\n\n4. Provide:\n   - SEO score estimate (0-100 with explanation, strengths, and weaknesses)\n   - 5-7 actionable recommendations\n\nReturn structured JSON matching the schema.",
+        "text": "=You are an SEO analyst.\n\nAnalyze the provided business and its nearby competitors sourced from OpenStreetMap.\n\nINPUT:\n- Business name: {{ $('Validate & Sanitize Input').item.json.business_name }}\n- Category: {{ $('Extract Geo Data').item.json.business_category }}\n- Location: {{ $('Extract Geo Data').item.json.formatted_address }}\n- Nearby competitors (name, category, address): {{ JSON.stringify($json.competitors) }}\n\nNOTE: Competitor data comes from OpenStreetMap and does not include ratings or review counts. Base relevance scoring on category match, business name signals, and geographic proximity.\n\nTASKS:\n1. For each competitor assign a relevance_score (1-10) based on:\n   - Category relevance to the business\n   - Name signals (branded vs generic)\n   - Likely local SEO competition\n\n2. Generate SEO insights:\n   - Keywords competitors are likely targeting\n   - Local SEO (\"near me\") keyword variations\n   - Industry-specific keywords\n\n3. Generate keyword clusters:\n   - High intent keywords (10-15 keywords)\n   - Local keywords (10-15 keywords)\n   - Long-tail keywords (10-15 keywords)\n\n4. Provide:\n   - SEO score estimate (0-100 with explanation, strengths, and weaknesses)\n   - 5-7 actionable recommendations\n\nReturn structured JSON matching the schema.",
         "hasOutputParser": true,
         "options": {
           "systemMessage": "You are an expert SEO analyst specializing in local business optimization and competitor analysis. Provide data-driven insights based on the business information and competitor data provided.",
