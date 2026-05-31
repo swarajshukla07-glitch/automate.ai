@@ -141,18 +141,21 @@ function ResultsStep({ bizName, seoData, onSwitchToStrategy }) {
     { name: 'Competitor A',             visibility: 91 },
     { name: 'Competitor B',             visibility: 78 },
   ]
-  const issues          = seoData?.issues          ?? [
-    'Weak local search visibility signals',
-    'Missing schema markup',
-    'Low domain authority vs. competitors',
-    'Poor keyword targeting on key pages',
-    'Lead response time exceeds 4 hours',
-  ]
+  const issues          = seoData?.issues?.length
+    ? seoData.issues
+    : [
+        'Weak local search visibility signals',
+        'Missing schema markup',
+        'Low domain authority vs. competitors',
+        'Poor keyword targeting on key pages',
+        'Lead response time exceeds 4 hours',
+      ]
   const keywords        = seoData?.keywords        ?? {}
-  const highIntent      = keywords.highIntent      ?? [{ keyword: '[service] near me',    difficulty: 42, opportunity: 91 }]
-  const local           = keywords.local           ?? [{ keyword: 'best [service] [city]', difficulty: 51, opportunity: 87 }]
-  const longTail        = keywords.longTail        ?? [{ keyword: '[service] for [niche]', difficulty: 22, opportunity: 89 }]
+  const highIntent      = keywords.highIntent?.length ? keywords.highIntent : [{ keyword: '[service] near me',    difficulty: 42, opportunity: 91 }]
+  const local           = keywords.local?.length      ? keywords.local      : [{ keyword: 'best [service] [city]', difficulty: 51, opportunity: 87 }]
+  const longTail        = keywords.longTail?.length   ? keywords.longTail   : [{ keyword: '[service] for [niche]', difficulty: 22, opportunity: 89 }]
   const recommendations = seoData?.recommendations ?? []
+  const scoreDetails    = seoData?.seoScoreDetails ?? null
 
   // Score color
   const scoreColor = score >= 75 ? '#10b981' : score >= 50 ? '#f59e0b' : '#ef4444'
@@ -197,6 +200,14 @@ function ResultsStep({ bizName, seoData, onSwitchToStrategy }) {
           {scoreLabel}
         </div>
       </div>
+
+      {/* ── Score explanation ── */}
+      {scoreDetails?.explanation && (
+        <div className="mb-4 px-4 py-3 rounded-xl text-xs text-slate-400 font-body"
+          style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+          {scoreDetails.explanation}
+        </div>
+      )}
 
       {/* ── Competitor comparison ── */}
       <div className="p-4 rounded-xl mb-4"
