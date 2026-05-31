@@ -90,15 +90,19 @@
     },
     {
       "parameters": {
-        "url": "https://geocode.maps.co/search",
+        "url": "https://api.foursquare.com/v3/places/search",
         "authentication": "genericCredentialType",
-        "genericAuthType": "httpQueryAuth",
+        "genericAuthType": "httpHeaderAuth",
         "sendQuery": true,
         "queryParameters": {
           "parameters": [
             {
-              "name": "q",
+              "name": "query",
               "value": "={{ $('Validate & Sanitize Input').item.json.address }}"
+            },
+            {
+              "name": "limit",
+              "value": "1"
             }
           ]
         },
@@ -116,9 +120,9 @@
       "typeVersion": 4.4,
       "position": [-400, 336],
       "credentials": {
-        "httpQueryAuth": {
-          "id": "p386QPvkP9GD4DLQ",
-          "name": "Query Auth account"
+        "httpHeaderAuth": {
+          "id": "foursquare_header_auth",
+          "name": "Foursquare API"
         }
       }
     },
@@ -135,25 +139,25 @@
             {
               "id": "2",
               "name": "latitude",
-              "value": "={{ $json[0].lat ?? $json.lat }}",
+              "value": "={{ $json.results[0].geocodes.main.latitude }}",
               "type": "string"
             },
             {
               "id": "3",
               "name": "longitude",
-              "value": "={{ $json[0].lon ?? $json.lon }}",
+              "value": "={{ $json.results[0].geocodes.main.longitude }}",
               "type": "string"
             },
             {
               "id": "4",
               "name": "formatted_address",
-              "value": "={{ $json[0].display_name ?? $json.display_name }}",
+              "value": "={{ $json.results[0].location.formatted_address ?? $json.results[0].location.address }}",
               "type": "string"
             },
             {
               "id": "5",
               "name": "business_category",
-              "value": "={{ $json[0].type ?? $json.type ?? 'business' }}",
+              "value": "={{ $json.results[0].categories?.[0]?.name ?? 'business' }}",
               "type": "string"
             }
           ]
