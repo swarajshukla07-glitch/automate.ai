@@ -42,7 +42,7 @@ function FormStep({ form, setForm, onSubmit, loading }) {
     { key: 'website',               label: 'Website URL',                 placeholder: 'https://yourwebsite.com',   required: true,  type: 'text'  },
     { key: 'email',                 label: 'Email Address',               placeholder: 'john@business.com',         required: true,  type: 'email' },
     { key: 'phone',                 label: 'Phone Number',                placeholder: '+1 (555) 000-0000',         required: false, type: 'tel'   },
-    { key: 'googleBusinessProfile', label: 'Google Business Profile Link',placeholder: 'maps.google.com/...',       required: false, type: 'text'  },
+    { key: 'googleBusinessProfile', label: 'Business Address',            placeholder: 'e.g. Connaught Place, New Delhi, India', required: false, type: 'text'  },
   ]
 
   const focus = e => { e.target.style.borderColor = 'rgba(14,165,233,0.5)'; e.target.style.boxShadow = '0 0 0 3px rgba(14,165,233,0.08)' }
@@ -65,6 +65,11 @@ function FormStep({ form, setForm, onSubmit, loading }) {
               style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
               onFocus={focus} onBlur={blur}
             />
+            {key === 'googleBusinessProfile' && (
+              <p className="mt-1 text-xs text-slate-600 font-body">
+                Enter your street address — not a Google Maps link or website URL
+              </p>
+            )}
           </div>
         ))}
       </div>
