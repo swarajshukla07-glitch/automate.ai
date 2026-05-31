@@ -37,12 +37,12 @@ function validate(form) {
 // ── STEP 1: Form ──────────────────────────────────────────────
 function FormStep({ form, setForm, onSubmit, loading }) {
   const fields = [
-    { key: 'name',                  label: 'Your Name',                   placeholder: 'John Smith',               required: true,  type: 'text'  },
-    { key: 'businessName',          label: 'Business Name',               placeholder: 'Apex Services LLC',         required: true,  type: 'text'  },
-    { key: 'website',               label: 'Website URL',                 placeholder: 'https://yourwebsite.com',   required: true,  type: 'text'  },
-    { key: 'email',                 label: 'Email Address',               placeholder: 'john@business.com',         required: true,  type: 'email' },
-    { key: 'phone',                 label: 'Phone Number',                placeholder: '+1 (555) 000-0000',         required: false, type: 'tel'   },
-    { key: 'googleBusinessProfile', label: 'Google Business Profile Link',placeholder: 'maps.google.com/...',       required: false, type: 'text'  },
+    { key: 'name',                  label: 'Your Name',        placeholder: 'John Smith',                     required: true,  type: 'text'  },
+    { key: 'businessName',          label: 'Business Name',    placeholder: 'Apex Services LLC',               required: true,  type: 'text'  },
+    { key: 'website',               label: 'Website URL',      placeholder: 'https://yourwebsite.com',         required: true,  type: 'text'  },
+    { key: 'email',                 label: 'Email Address',    placeholder: 'john@business.com',               required: true,  type: 'email' },
+    { key: 'phone',                 label: 'Phone Number',     placeholder: '+1 (555) 000-0000',               required: false, type: 'tel'   },
+    { key: 'googleBusinessProfile', label: 'Business Address', placeholder: 'e.g. 123 Main St, New York, NY', required: false, type: 'text'  },
   ]
 
   const focus = e => { e.target.style.borderColor = 'rgba(14,165,233,0.5)'; e.target.style.boxShadow = '0 0 0 3px rgba(14,165,233,0.08)' }
@@ -133,7 +133,6 @@ function LoadingStep({ progress, msgIndex }) {
 
 // ── STEP 3: Results (driven by n8n data) ──────────────────────
 function ResultsStep({ bizName, seoData, onSwitchToStrategy }) {
-  // Pull from n8n response with sensible fallbacks
   const score           = seoData?.seoScore       ?? 64
   const scoreLabel      = seoData?.scoreLabel      ?? 'Needs Improvement'
   const competitors     = seoData?.competitors     ?? [
@@ -151,13 +150,12 @@ function ResultsStep({ bizName, seoData, onSwitchToStrategy }) {
         'Lead response time exceeds 4 hours',
       ]
   const keywords        = seoData?.keywords        ?? {}
-  const highIntent      = keywords.highIntent?.length ? keywords.highIntent : [{ keyword: '[service] near me',    difficulty: 42, opportunity: 91 }]
+  const highIntent      = keywords.highIntent?.length ? keywords.highIntent : [{ keyword: '[service] near me',     difficulty: 42, opportunity: 91 }]
   const local           = keywords.local?.length      ? keywords.local      : [{ keyword: 'best [service] [city]', difficulty: 51, opportunity: 87 }]
   const longTail        = keywords.longTail?.length   ? keywords.longTail   : [{ keyword: '[service] for [niche]', difficulty: 22, opportunity: 89 }]
   const recommendations = seoData?.recommendations ?? []
   const scoreDetails    = seoData?.seoScoreDetails ?? null
 
-  // Score color
   const scoreColor = score >= 75 ? '#10b981' : score >= 50 ? '#f59e0b' : '#ef4444'
   const circumference = 2 * Math.PI * 60
   const dashArray = `${(score / 100) * circumference} ${circumference}`
@@ -416,9 +414,9 @@ export default function SEOModal({ onClose, onSwitchToStrategy }) {
   }
 
   const titles = {
-    form:    { title: 'Free AI SEO Audit',         sub: 'Enterprise-grade AI analysis in 60 seconds' },
+    form:    { title: 'Free AI SEO Audit',          sub: 'Enterprise-grade AI analysis in 60 seconds' },
     loading: { title: 'AI Analyzing Your Business', sub: 'Running 9-point SEO intelligence scan...'   },
-    results: { title: 'Your AI SEO Report',         sub: `Audit complete for ${form.businessName || 'your business'}` },
+    results: { title: 'Your AI SEO Report',          sub: `Audit complete for ${form.businessName || 'your business'}` },
   }
   const { title, sub } = titles[step]
 
