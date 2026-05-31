@@ -1,0 +1,423 @@
+{
+  "name": "SEO & Competitor Analysis Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "seo-analysis",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "204bcb5b-3b6b-4858-8493-86ebb3648a1c",
+      "name": "Webhook - Business Submission",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [-1072, 336],
+      "webhookId": "245782a4-d79e-4c06-9808-d4fe1c6daf53"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            { "id": "1", "name": "business_name", "value": "={{ $json.body.businessName }}", "type": "string" },
+            { "id": "2", "name": "address",        "value": "={{ $json.body.googleBusinessProfile }}", "type": "string" },
+            { "id": "3", "name": "email",          "value": "={{ $json.body.email?.toLowerCase().trim() }}", "type": "string" },
+            { "id": "4", "name": "phone",          "value": "={{ $json.body.phone?.trim() }}", "type": "string" },
+            { "id": "5", "name": "timestamp",      "value": "={{ $now.toISO() }}", "type": "string" },
+            { "id": "6", "name": "name",           "value": "={{ $json.body.name }}", "type": "string" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "dd15e3d3-b220-4dd9-b1a7-a6c78d71ede3",
+      "name": "Validate & Sanitize Input",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [-848, 336]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1O230hEgNHlnZeVSI1c7OyLy73BWpX0yPIsJcNBhoEiQ",
+          "mode": "list",
+          "cachedResultName": "SEO Score",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1O230hEgNHlnZeVSI1c7OyLy73BWpX0yPIsJcNBhoEiQ/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1O230hEgNHlnZeVSI1c7OyLy73BWpX0yPIsJcNBhoEiQ/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            " Time Stamp":  "={{ $json.timestamp }}",
+            "Name":         "={{ $json.name }}",
+            "Business Name":"={{ $json.business_name }}",
+            "Address":      "={{ $json.address }}",
+            "Email":        "={{ $json.email }}",
+            "Phone":        "={{ $json.phone }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            { "id": " Time Stamp",  "displayName": " Time Stamp",  "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true },
+            { "id": "Name",         "displayName": "Name",         "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true },
+            { "id": "Business Name","displayName": "Business Name","required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true },
+            { "id": "Address",      "displayName": "Address",      "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true },
+            { "id": "Email",        "displayName": "Email",        "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true },
+            { "id": "Phone",        "displayName": "Phone",        "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "f67175b7-9f9e-408a-b1b9-7e59f33a130b",
+      "name": "Store Raw Submission",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [-624, 336],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "pImCbtzQfmwyiYRm",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://geocode.maps.co/search",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "={{ $('Validate & Sanitize Input').item.json.address }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "2a9209ef-05b7-4d55-a8ff-3a908ac89f21",
+      "name": "Geocode Business Address",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [-400, 336],
+      "credentials": {
+        "httpQueryAuth": {
+          "id": "p386QPvkP9GD4DLQ",
+          "name": "Query Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1",
+              "name": "business_name",
+              "value": "={{ $('Validate & Sanitize Input').item.json.business_name }}",
+              "type": "string"
+            },
+            {
+              "id": "2",
+              "name": "latitude",
+              "value": "={{ $json[0].lat ?? $json.lat }}",
+              "type": "string"
+            },
+            {
+              "id": "3",
+              "name": "longitude",
+              "value": "={{ $json[0].lon ?? $json.lon }}",
+              "type": "string"
+            },
+            {
+              "id": "4",
+              "name": "formatted_address",
+              "value": "={{ $json[0].display_name ?? $json.display_name }}",
+              "type": "string"
+            },
+            {
+              "id": "5",
+              "name": "business_category",
+              "value": "={{ $json[0].type ?? $json.type ?? 'business' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "954ac6c8-a7f8-4548-9566-814bcb30ac30",
+      "name": "Extract Geo Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [-176, 336]
+    },
+    {
+      "parameters": {
+        "url": "https://maps.googleapis.com/maps/api/place/nearbysearch/json",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "location",
+              "value": "={{ $json.latitude }},{{ $json.longitude }}"
+            },
+            {
+              "name": "radius",
+              "value": "10000"
+            },
+            {
+              "name": "type",
+              "value": "={{ $json.business_category }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "242635f0-6a41-48c8-9136-c38fa4983ba7",
+      "name": "Find Nearby Competitors",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [48, 336],
+      "credentials": {
+        "httpQueryAuth": {
+          "id": "p386QPvkP9GD4DLQ",
+          "name": "Query Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const geoData    = $('Extract Geo Data').first().json;\nconst nearbyData = $('Find Nearby Competitors').first().json;\n\nconst competitors = (nearbyData.results || [])\n  .sort((a, b) => {\n    const scoreA = (a.rating || 0) * Math.log(a.user_ratings_total || 1);\n    const scoreB = (b.rating || 0) * Math.log(b.user_ratings_total || 1);\n    return scoreB - scoreA;\n  })\n  .slice(0, 10)\n  .map(c => ({\n    name: c.name,\n    rating: c.rating || 0,\n    reviews: c.user_ratings_total || 0,\n    category: (c.types && c.types[0]) || 'unknown'\n  }));\n\nreturn [{ json: {\n  business_name: geoData.business_name,\n  business_category: geoData.business_category,\n  location: geoData.formatted_address,\n  competitors\n}}];"
+      },
+      "id": "b1a49da1-44c7-4109-b298-8aac363f792b",
+      "name": "Normalize Top Competitors",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [272, 336]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an SEO analyst.\n\nAnalyze the provided business and its competitors.\n\nINPUT:\n- Business name: {{ $('Validate & Sanitize Input').item.json.business_name }}\n- Category: {{ $('Extract Geo Data').item.json.business_category }}\n- Location: {{ $('Extract Geo Data').item.json.formatted_address }}\n- Competitors: {{ JSON.stringify($json.competitors) }}\n\nTASKS:\n1. Identify top competitors based on:\n   - Ratings\n   - Reviews\n   - Relevance (assign relevance_score 1-10)\n\n2. Generate SEO insights:\n   - What keywords competitors are likely ranking for\n   - Local SEO (\"near me\") keyword variations\n   - Industry-specific keywords\n\n3. Generate keyword clusters:\n   - High intent keywords (10-15 keywords)\n   - Local keywords (10-15 keywords)\n   - Long-tail keywords (10-15 keywords)\n\n4. Provide:\n   - SEO score estimate (0-100 with explanation, strengths, and weaknesses)\n   - 5-7 actionable recommendations\n\nReturn structured JSON matching the schema.",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are an expert SEO analyst specializing in local business optimization and competitor analysis. Provide data-driven insights based on the business information and competitor data provided.",
+          "maxIterations": 5
+        }
+      },
+      "id": "4d798042-3e4a-45de-a680-12150f4afcba",
+      "name": "SEO Analysis Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [496, 336]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "builtInTools": {},
+        "options": {
+          "temperature": 0.3
+        }
+      },
+      "id": "21c14e5f-6682-4841-8ea4-52fa0b4a00a7",
+      "name": "OpenAI GPT-5 Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [512, 560],
+      "credentials": {
+        "openAiApi": {
+          "id": "rdhq0oq07Yb2fffy",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"business_name\": \"string\",\n  \"google_maps_url\": \"string\",\n  \"top_competitors\": [\n    {\n      \"name\": \"string\",\n      \"rating\": 0,\n      \"reviews\": 0,\n      \"relevance_score\": 0,\n      \"google_maps_url\": \"string\",\n      \"proximity_estimate\": \"string\",\n      \"primary_keywords_likely_targeted\": [\"string\"]\n    }\n  ],\n  \"seo_insights\": {\n    \"competitor_keywords\": [\"string\"],\n    \"local_keywords\": [\"string\"],\n    \"industry_keywords\": [\"string\"],\n    \"near_me_variations\": [\"string\"]\n  },\n  \"keyword_clusters\": {\n    \"high_intent\": [\"string\"],\n    \"local\": [\"string\"],\n    \"long_tail\": [\"string\"]\n  },\n  \"seo_score_estimate\": {\n    \"score\": 0,\n    \"explanation\": \"string\",\n    \"strengths\": [\"string\"],\n    \"weaknesses\": [\"string\"]\n  },\n  \"recommendations\": [\"string\"]\n}"
+      },
+      "id": "acefbd42-5aba-41f4-b72c-31dd55f2515e",
+      "name": "SEO Analysis Schema",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [640, 560]
+    },
+    {
+      "parameters": {
+        "jsCode": "const analysis = $input.first().json.output;\n\nconst calculateDifficulty = (keywords) => {\n  if (!Array.isArray(keywords)) return [];\n  return keywords.map(kw => {\n    const text = typeof kw === 'string' ? kw : (kw.keyword || '');\n    const wordCount = text.split(' ').length;\n    const hasLocation = /near me|local|downtown|area/i.test(text);\n\n    let difficulty = 50;\n    if (wordCount > 3) difficulty -= 10;\n    if (hasLocation) difficulty -= 15;\n    if (/best|top|leading/i.test(text)) difficulty += 20;\n\n    difficulty = Math.max(0, Math.min(100, difficulty));\n\n    return {\n      keyword: text,\n      difficulty,\n      opportunity: 100 - difficulty\n    };\n  });\n};\n\nconst overallScore = analysis.seo_score_estimate?.score ?? 50;\n\nconst competitors = analysis.top_competitors || [];\nconst competitorStrength = competitors.length\n  ? Math.round(\n      competitors.reduce((sum, c) => sum + (c.relevance_score || 0), 0)\n      / competitors.length * 10\n    )\n  : 0;\n\nreturn [{\n  json: {\n    overall_seo_score: overallScore,\n    top_competitors: competitors,\n    seo_insights: analysis.seo_insights || {},\n    keyword_analysis: {\n      high_intent: calculateDifficulty(analysis.keyword_clusters?.high_intent),\n      local:       calculateDifficulty(analysis.keyword_clusters?.local),\n      long_tail:   calculateDifficulty(analysis.keyword_clusters?.long_tail)\n    },\n    recommendations: analysis.recommendations || [],\n    seo_score_details: analysis.seo_score_estimate || null,\n    score_breakdown: {\n      competitor_strength: competitorStrength,\n      keyword_opportunity: Math.max(0, 100 - competitorStrength),\n      local_presence:      Math.max(0, overallScore - 10)\n    }\n  }\n}];"
+      },
+      "id": "59ad2575-a40b-422d-9146-4a1775871880",
+      "name": "Calculate SEO Scores",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [848, 336]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1O230hEgNHlnZeVSI1c7OyLy73BWpX0yPIsJcNBhoEiQ",
+          "mode": "list",
+          "cachedResultName": "SEO Score",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1O230hEgNHlnZeVSI1c7OyLy73BWpX0yPIsJcNBhoEiQ/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1O230hEgNHlnZeVSI1c7OyLy73BWpX0yPIsJcNBhoEiQ/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Analysis": "={{ $json.overall_seo_score }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            { "id": " Time Stamp",  "displayName": " Time Stamp",  "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true },
+            { "id": "Name",         "displayName": "Name",         "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true },
+            { "id": "Business Name","displayName": "Business Name","required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true },
+            { "id": "Address",      "displayName": "Address",      "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true },
+            { "id": "Email",        "displayName": "Email",        "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true },
+            { "id": "Phone",        "displayName": "Phone",        "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true },
+            { "id": "Analysis",     "displayName": "Analysis",     "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "9ebaf2be-4025-45d2-a9a3-95a3d8b73add",
+      "name": "Save Analysis Results",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [1072, 336],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "pImCbtzQfmwyiYRm",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            { "id": "1", "name": "status",  "value": "success", "type": "string" },
+            { "id": "2", "name": "message", "value": "SEO analysis completed successfully", "type": "string" },
+            { "id": "3", "name": "data",    "value": "={{ $(\"Calculate SEO Scores\").item.json }}", "type": "object" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d92890b2-fb84-4eb6-b29f-0561d9aae14e",
+      "name": "Format Webhook Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1296, 336]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "1267a7bd-2ec0-4665-8e06-90edccfa0f11",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [1552, 336]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook - Business Submission": {
+      "main": [[{ "node": "Validate & Sanitize Input", "type": "main", "index": 0 }]]
+    },
+    "Validate & Sanitize Input": {
+      "main": [[{ "node": "Store Raw Submission", "type": "main", "index": 0 }]]
+    },
+    "Store Raw Submission": {
+      "main": [[{ "node": "Geocode Business Address", "type": "main", "index": 0 }]]
+    },
+    "Geocode Business Address": {
+      "main": [[{ "node": "Extract Geo Data", "type": "main", "index": 0 }]]
+    },
+    "Extract Geo Data": {
+      "main": [[{ "node": "Find Nearby Competitors", "type": "main", "index": 0 }]]
+    },
+    "Find Nearby Competitors": {
+      "main": [[{ "node": "Normalize Top Competitors", "type": "main", "index": 0 }]]
+    },
+    "Normalize Top Competitors": {
+      "main": [[{ "node": "SEO Analysis Agent", "type": "main", "index": 0 }]]
+    },
+    "SEO Analysis Agent": {
+      "main": [[{ "node": "Calculate SEO Scores", "type": "main", "index": 0 }]]
+    },
+    "OpenAI GPT-5 Model": {
+      "ai_languageModel": [[{ "node": "SEO Analysis Agent", "type": "ai_languageModel", "index": 0 }]]
+    },
+    "SEO Analysis Schema": {
+      "ai_outputParser": [[{ "node": "SEO Analysis Agent", "type": "ai_outputParser", "index": 0 }]]
+    },
+    "Calculate SEO Scores": {
+      "main": [[{ "node": "Save Analysis Results", "type": "main", "index": 0 }]]
+    },
+    "Save Analysis Results": {
+      "main": [[{ "node": "Format Webhook Response", "type": "main", "index": 0 }]]
+    },
+    "Format Webhook Response": {
+      "main": [[{ "node": "Respond to Webhook", "type": "main", "index": 0 }]]
+    },
+    "Respond to Webhook": {
+      "main": [[]]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "64abf035-3424-41f7-a090-d0265019e72a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "d7c44b7e982fe3f1f597e7b85a5bd9d720f067137f388701232195152b9f1dc6"
+  },
+  "id": "vJZe2YyW6hNW83ew",
+  "tags": [
+    { "name": "automatewithraj", "id": "DnjBCH2ShFis8THM" },
+    { "name": "AI", "id": "sQcb8LgY9A0rooLV" },
+    { "name": "SEO", "id": "tGN11l2ZmCwSAuEv" }
+  ]
+}
