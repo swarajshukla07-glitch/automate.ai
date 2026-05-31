@@ -3,8 +3,72 @@
  */
 
 const WEBHOOK_URLS = {
-  seoAnalysis: 'https://adlyst.app.n8n.cloud/webhook-test/seo-analysis',
+  seoAnalysis: 'https://automatewithraj1.app.n8n.cloud/webhook-test/seo-analysis',
   strategyCall: import.meta.env.VITE_STRATEGY_WEBHOOK_URL || '',
+}
+
+/**
+ * Map the n8n workflow response (Calculate SEO Scores output) to the shape
+ * that SEOModal ResultsStep consumes.
+ *
+ * n8n shape (wrapped in { status, message, data: { ... } }):
+ *   overall_seo_score, top_competitors[], seo_insights, keyword_analysis,
+ *   recommendations[], seo_score_details { score, explanation, strengths, weaknesses }
+ */
+function transformN8nResponse(raw) {
+  // Support both { status, data } wrapper and direct payload
+  const d = raw?.data ?? raw
+
+  const score = d?.overall_seo_score ?? d?.seo_score_estimate?.score ?? 50
+
+  const scoreLabel =
+    score >= 80 ? 'Excellent'
+    : score >= 65 ? 'Good'
+    : score >= 45 ? 'Needs Improvement'
+    : 'Critical'
+
+  // top_competitors → [{name, visibility, isYou}]
+  const competitors = (d?.top_competitors ?? []).map(c => ({
+    name: c.name ?? 'Competitor',
+    visibility: Math.round((c.relevance_score ?? 5) * 10),
+    isYou: false,
+  }))
+
+  // weaknesses become issues
+  const issues = d?.seo_score_details?.weaknesses
+    ?? d?.seo_score_estimate?.weaknesses
+    ?? []
+
+  // keyword_analysis already has { keyword, difficulty, opportunity } from the JS node
+  const ka = d?.keyword_analysis ?? {}
+  const keywords = {
+    highIntent: (ka.high_intent ?? []).map(k => ({
+      keyword: k.keyword,
+      difficulty: k.difficulty ?? 50,
+      opportunity: k.opportunity ?? 50,
+    })),
+    local: (ka.local ?? []).map(k => ({
+      keyword: k.keyword,
+      difficulty: k.difficulty ?? 50,
+      opportunity: k.opportunity ?? 50,
+    })),
+    longTail: (ka.long_tail ?? []).map(k => ({
+      keyword: k.keyword,
+      difficulty: k.difficulty ?? 50,
+      opportunity: k.opportunity ?? 50,
+    })),
+  }
+
+  return {
+    seoScore: score,
+    scoreLabel,
+    competitors,
+    issues,
+    keywords,
+    recommendations: d?.recommendations ?? [],
+    seoScoreDetails: d?.seo_score_details ?? d?.seo_score_estimate ?? null,
+    seoInsights: d?.seo_insights ?? null,
+  }
 }
 
 /**
@@ -53,7 +117,10 @@ export async function submitSEOAnalysis(formData) {
   console.log('[NexusAI] n8n response:', data)
 
   // n8n sometimes wraps response in an array
-  const result = Array.isArray(data) ? data[0] : data
+  const raw = Array.isArray(data) ? data[0] : data
+
+  // Map n8n workflow output → SEOModal display format
+  const result = transformN8nResponse(raw)
 
   return { success: true, data: result }
 }

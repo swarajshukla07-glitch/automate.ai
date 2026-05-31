@@ -141,18 +141,21 @@ function ResultsStep({ bizName, seoData, onSwitchToStrategy }) {
     { name: 'Competitor A',             visibility: 91 },
     { name: 'Competitor B',             visibility: 78 },
   ]
-  const issues          = seoData?.issues          ?? [
-    'Weak local search visibility signals',
-    'Missing schema markup',
-    'Low domain authority vs. competitors',
-    'Poor keyword targeting on key pages',
-    'Lead response time exceeds 4 hours',
-  ]
+  const issues          = seoData?.issues?.length
+    ? seoData.issues
+    : [
+        'Weak local search visibility signals',
+        'Missing schema markup',
+        'Low domain authority vs. competitors',
+        'Poor keyword targeting on key pages',
+        'Lead response time exceeds 4 hours',
+      ]
   const keywords        = seoData?.keywords        ?? {}
-  const highIntent      = keywords.highIntent      ?? [{ keyword: '[service] near me',    difficulty: 42, opportunity: 91 }]
-  const local           = keywords.local           ?? [{ keyword: 'best [service] [city]', difficulty: 51, opportunity: 87 }]
-  const longTail        = keywords.longTail        ?? [{ keyword: '[service] for [niche]', difficulty: 22, opportunity: 89 }]
+  const highIntent      = keywords.highIntent?.length ? keywords.highIntent : [{ keyword: '[service] near me',    difficulty: 42, opportunity: 91 }]
+  const local           = keywords.local?.length      ? keywords.local      : [{ keyword: 'best [service] [city]', difficulty: 51, opportunity: 87 }]
+  const longTail        = keywords.longTail?.length   ? keywords.longTail   : [{ keyword: '[service] for [niche]', difficulty: 22, opportunity: 89 }]
   const recommendations = seoData?.recommendations ?? []
+  const scoreDetails    = seoData?.seoScoreDetails ?? null
 
   // Score color
   const scoreColor = score >= 75 ? '#10b981' : score >= 50 ? '#f59e0b' : '#ef4444'
@@ -198,13 +201,20 @@ function ResultsStep({ bizName, seoData, onSwitchToStrategy }) {
         </div>
       </div>
 
+      {/* ── Score explanation ── */}
+      {scoreDetails?.explanation && (
+        <div className="mb-4 px-4 py-3 rounded-xl text-xs text-slate-400 font-body"
+          style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+          {scoreDetails.explanation}
+        </div>
+      )}
+
       {/* ── Competitor comparison ── */}
       <div className="p-4 rounded-xl mb-4"
         style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
         <div className="text-xs font-display font-bold uppercase tracking-widest mb-3" style={{ color: '#38bdf8' }}>
           Competitor Visibility
         </div>
-        {/* Always show your business first */}
         {[{ name: bizName || 'Your Business', visibility: score, isYou: true }, ...competitors.filter(c => !c.isYou)].map(({ name, visibility, isYou }) => (
           <div key={name} className="flex items-center gap-3 mb-2">
             <span className="text-xs w-28 flex-shrink-0"
@@ -250,7 +260,6 @@ function ResultsStep({ bizName, seoData, onSwitchToStrategy }) {
           Keyword Opportunities
         </div>
         <div className="grid grid-cols-1 gap-2">
-          {/* High Intent */}
           {highIntent.length > 0 && (
             <div>
               <div className="text-xs text-slate-500 mb-1.5 font-semibold">High Intent</div>
@@ -272,8 +281,6 @@ function ResultsStep({ bizName, seoData, onSwitchToStrategy }) {
               ))}
             </div>
           )}
-
-          {/* Local */}
           {local.length > 0 && (
             <div>
               <div className="text-xs text-slate-500 mb-1.5 font-semibold">Local Search</div>
@@ -295,8 +302,6 @@ function ResultsStep({ bizName, seoData, onSwitchToStrategy }) {
               ))}
             </div>
           )}
-
-          {/* Long tail — blurred */}
           {longTail.length > 0 && (
             <div className="relative">
               <div className="text-xs text-slate-500 mb-1.5 font-semibold">Long-Tail Opportunities</div>
@@ -381,11 +386,10 @@ export default function SEOModal({ onClose, onSwitchToStrategy }) {
     setProgress(0)
     setMsgIndex(0)
 
-    // Animate progress bar while waiting for n8n
     let prog = 0
     let msg  = 0
     const progInterval = setInterval(() => {
-      prog = Math.min(prog + 0.8, 90) // stops at 90 — jumps to 100 when data arrives
+      prog = Math.min(prog + 0.8, 90)
       setProgress(prog)
     }, 40)
     const msgInterval = setInterval(() => {
